@@ -74,7 +74,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="delTrademark">取 消</el-button>
+        <el-button @click="isShowDialog = false">取 消</el-button>
         <el-button type="primary" @click="addOrUpdateTrademark"
           >确 定</el-button
         >
@@ -166,13 +166,8 @@ export default {
 
     //显示修改界面
     showUpdate(trademark) {
-      this.form = trademark;
+      this.form = { ...trademark };
       this.isShowDialog = true;
-    },
-    //点击取消按钮
-    delTrademark() {
-      this.isShowDialog = false;
-      this.getTrademarks(this.page);
     },
 
     //添加品牌
