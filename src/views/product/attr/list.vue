@@ -42,12 +42,18 @@
                 size="mini"
                 @click="showUpdate(row)"
               ></HintButton>
-              <HintButton
-                title="删除"
-                type="danger"
-                icon="el-icon-delete"
-                size="mini"
-              ></HintButton>
+              <el-popconfirm
+                :title="`确定删除属性${row.attrName}吗?`"
+                @onConfirm="delAttr(row)"
+              >
+                <HintButton
+                  title="删除"
+                  type="danger"
+                  icon="el-icon-delete"
+                  size="mini"
+                  slot="reference"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -85,23 +91,33 @@
                 @blur="toShow(row)"
                 @keyup.enter.native="toShow(row)"
               ></el-input>
-              <p v-else @click="toEdit(row)">{{ row.valueName }}</p>
+              <span
+                v-else
+                @click="toEdit(row)"
+                style="display:inline-block;width: 100%"
+                >{{ row.valueName }}</span
+              >
             </template>
           </el-table-column>
           <el-table-column label="操作">
             <template slot-scope="{ row, $index }">
-              <HintButton
-                title="删除"
-                type="danger"
-                icon="el-icon-delete"
-                size="mini"
-                @click="attr.attrValueList.splice($index, 1)"
-              ></HintButton>
+              <el-popconfirm
+                :title="`确定删除属性值${row.valueName}吗？`"
+                @onConfirm="attr.attrValueList.splice($index, 1)"
+              >
+                <HintButton
+                  slot="reference"
+                  title="删除"
+                  type="danger"
+                  icon="el-icon-delete"
+                  size="mini"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
 
-        <el-button type="primary">保存</el-button>
+        <el-button type="primary" @click="saveAttr">保存</el-button>
         <el-button @click="isShowList = true">取消</el-button>
       </div>
     </el-card>
@@ -109,6 +125,7 @@
 </template>
 
 <script>
+import cloneDeep from "lodash/cloneDeep";
 export default {
   name: "AttrList",
 
@@ -126,7 +143,9 @@ export default {
         attrValueList: [], //属性值的列表
         categoryId: "", // 3级的分类ID
         categoryLevel: 3 // 只能是3级
-      }
+      },
+
+      isShowSave: true
     };
   },
 
@@ -139,6 +158,25 @@ export default {
   },
 
   methods: {
+    //删除属性
+    async delAttr(value) {
+      const result = await this.$API.attr.remove(value.id);
+      if (result.code === 200) {
+        this.getAttrs();
+        this.$message.success("删除成功");
+      }
+    },
+
+    //保存属性
+    async saveAttr() {
+      const result = await this.$API.attr.addOrUpdate(this.attr);
+      if (result.code === 200) {
+        this.isShowList = true;
+        this.getAttrs();
+        this.$message.success("保存成功");
+      }
+    },
+
     //将指定属性值对象的界面变为编辑模式
     toEdit(value) {
       if (value.hasOwnProperty("edit")) {
@@ -182,7 +220,8 @@ export default {
     //显示修改属性的界面
     showUpdate(attr) {
       // 保存要修改的属性对象
-      this.attr = attr;
+      // this.attr = { ...attr }; 浅拷贝属性值点取消有bug
+      this.attr = cloneDeep(attr);
       // 显示更新的界面(attr中有数据)
       this.isShowList = false;
     },
