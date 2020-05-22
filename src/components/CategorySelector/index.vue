@@ -5,6 +5,7 @@
         v-model="cForm.category1Id"
         placeholder="选择一级分类"
         @change="handleChange1"
+        :disabled="disabled"
       >
         <el-option
           :label="c.name"
@@ -20,6 +21,7 @@
         v-model="cForm.category2Id"
         placeholder="选择二级分类"
         @change="handleChange2"
+        :disabled="disabled"
       >
         <el-option
           :label="c.name"
@@ -35,6 +37,7 @@
         v-model="cForm.category3Id"
         placeholder="选择三级分类"
         @change="handleChange3"
+        :disabled="disabled"
       >
         <el-option
           :label="c.name"
@@ -61,7 +64,9 @@ export default {
 
       category1List: [], // 一级分类列表
       category2List: [], // 二级分类列表
-      category3List: [] // 三级分类列表
+      category3List: [], // 三级分类列表
+
+      disabled: false // 下拉列表是否禁用
     };
   },
 

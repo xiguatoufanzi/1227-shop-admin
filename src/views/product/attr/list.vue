@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card>
-      <CategorySelector @categoryChange="handleCategoryChange" />
+      <CategorySelector @categoryChange="handleCategoryChange" ref="cs" />
     </el-card>
     <el-card>
       <div v-show="isShowList">
@@ -84,6 +84,7 @@
           <el-table-column label="属性值名称">
             <template slot-scope="{ row, $index }">
               <el-input
+                :ref="$index"
                 v-if="row.edit"
                 v-model="row.valueName"
                 size="mini"
@@ -93,7 +94,7 @@
               ></el-input>
               <span
                 v-else
-                @click="toEdit(row)"
+                @click="toEdit(row, $index)"
                 style="display:inline-block;width: 100%"
                 >{{ row.valueName }}</span
               >
@@ -117,7 +118,12 @@
           </el-table-column>
         </el-table>
 
-        <el-button type="primary" @click="saveAttr">保存</el-button>
+        <el-button
+          type="primary"
+          @click="saveAttr"
+          :disabled="!attr.attrName || attr.attrValueList.length === 0"
+          >保存</el-button
+        >
         <el-button @click="isShowList = true">取消</el-button>
       </div>
     </el-card>
@@ -151,10 +157,16 @@ export default {
 
   mounted() {
     // this.$API.attr.getList(2, 13, 61);
-    this.category1Id = 2;
-    this.category2Id = 13;
-    this.category3Id = 61;
-    this.getAttrs();
+    // this.category1Id = 2;
+    // this.category2Id = 13;
+    // this.category3Id = 61;
+    // this.getAttrs();
+  },
+
+  watch: {
+    isShowList(value) {
+      this.$refs.cs.disabled = !value;
+    }
   },
 
   methods: {
@@ -169,6 +181,18 @@ export default {
 
     //保存属性
     async saveAttr() {
+      const attr = this.attr;
+      attr.attrValueList = attr.attrValueList.filter(value => {
+        if (value.valueName.trim() !== "") {
+          delete value.edit;
+          return true;
+        }
+      });
+      if (attr.attrValueList.length === 0) {
+        this.$message.warning("至少指定一个属性值名称");
+        return;
+      }
+
       const result = await this.$API.attr.addOrUpdate(this.attr);
       if (result.code === 200) {
         this.isShowList = true;
@@ -178,12 +202,17 @@ export default {
     },
 
     //将指定属性值对象的界面变为编辑模式
-    toEdit(value) {
+    toEdit(value, index) {
       if (value.hasOwnProperty("edit")) {
         value.edit = true;
       } else {
         this.$set(value, "edit", true);
       }
+
+      //自动获取input焦点
+      this.$nextTick(() => {
+        this.$refs[index].focus();
+      });
     },
 
     //将指定属性值对象的界面变为查看模式
@@ -232,6 +261,11 @@ export default {
         attrId: this.attr.id, // 有值则为修改属性
         valueName: "",
         edit: true // 添加的新属性值是编辑模式的
+      });
+
+      //input自动获取焦点
+      this.$nextTick(() => {
+        this.$refs[this.attr.attrValueList.length - 1].focus();
       });
     },
 

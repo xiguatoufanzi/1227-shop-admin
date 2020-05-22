@@ -1,11 +1,11 @@
 <template>
   <div>
-    SPU管理
+    <CategorySelector />
   </div>
 </template>
 
 <script>
 export default {
-  name: 'SpuList',
-}
+  name: "SpuList"
+};
 </script>
