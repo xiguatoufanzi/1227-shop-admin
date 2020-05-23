@@ -26,10 +26,11 @@
     <el-form-item label="SPU图片">
       <el-upload
         :file-list="spuImageList"
-        action="https://jsonplaceholder.typicode.com/posts/"
+        action="/dev-api/admin/product/fileUpload"
         list-type="picture-card"
         :on-preview="handlePictureCardPreview"
         :on-remove="handleRemove"
+        :on-success="handleSuccess"
       >
         <i class="el-icon-plus"></i>
       </el-upload>
@@ -164,6 +165,29 @@ export default {
   },
 
   methods: {
+    /*
+    上传图片成功后的回调函数
+    response: 响应体数据对象, 对应的是axios中的response.data
+    file: 新上传成功的图片对象
+    fileList: 所有图片对象的数组
+    */
+    handleSuccess(response, file, fileList) {
+      this.spuImageList = fileList;
+    },
+    /*
+    点击删除按钮的回调(并没有发请求)
+    file: 被删除图片对象
+    fileList: 剩下的所有图片对象的数组
+    */
+    handleRemove(file, fileList) {
+      this.spuImageList = fileList;
+    },
+    //用来显示大图dialog的回调函数,file: 点击的图片信息对象
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.dialogVisible = true;
+    },
+
     //有关销售属性表格的方法
     handleClose(tag) {
       this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
@@ -183,6 +207,12 @@ export default {
       }
       this.inputVisible = false;
       this.inputValue = "";
+    },
+
+    //由父组件调用的方法,请求加载相关数据
+    initLoadAddData() {
+      this.getTrademarkList();
+      this.getSaleAttrList();
     },
 
     // 由父组件调用的方法,根据id请求加载相关数据
@@ -221,15 +251,6 @@ export default {
     async getSaleAttrList() {
       const result = await this.$API.spu.getSaleList();
       this.saleAttrList = result.data;
-    },
-
-    //上传图片所用回调
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
-    },
-    handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.dialogVisible = true;
     },
 
     back() {

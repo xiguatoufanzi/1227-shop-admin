@@ -6,11 +6,15 @@
 
     <el-card style="margin-bottom: 20px">
       <div v-show="!isShowSpuForm && !isShowSkuForm">
-        <el-button type="primary" icon="el-icon-plus" style="margin-bottom:20px"
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          style="margin-bottom:20px"
+          @click="showAddSpu"
           >添加SPU</el-button
         >
 
-        <el-table border :data="spuList" stripe v-loading="loading">
+        <el-table border :data="spuList" v-loading="loading">
           <el-table-column
             label="序号"
             type="index"
@@ -108,6 +112,12 @@ export default {
     //显示SKU添加的表单界面
     showSkuAdd() {
       this.isShowSkuForm = true;
+    },
+
+    //显示SPU的添加界面
+    showAddSpu() {
+      this.isShowSpuForm = true;
+      this.$refs.spuForm.initLoadAddData();
     },
 
     //显示SPU的修改界面
