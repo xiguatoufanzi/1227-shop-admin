@@ -39,12 +39,19 @@
     </el-form-item>
 
     <el-form-item label="销售属性">
-      <el-select placeholder="请选择品牌" v-model="saleId">
+      <el-select
+        :placeholder="
+          unUsedSaleAttrList.length > 0
+            ? `还有${unUsedSaleAttrList.length}个未使用`
+            : '没有啦！'
+        "
+        v-model="saleId"
+      >
         <el-option
-          v-for="s in saleAttrList"
-          :key="s.id"
-          :label="s.name"
-          :value="s.id"
+          v-for="attr in unUsedSaleAttrList"
+          :key="attr.id"
+          :label="attr.name"
+          :value="attr.id"
         ></el-option>
       </el-select>
       <el-button type="primary" icon="el-icon-plus">添加销售属性</el-button>
@@ -120,11 +127,10 @@ export default {
     return {
       labelPosition: "right", //右对齐
 
-      dialogImageUrl: "",
-      dialogVisible: false,
+      dialogImageUrl: "", // 要显示的大图的url
+      dialogVisible: false, // 是否显示大图dialog, 默认不显示
 
-      saleId: "",
-      trademarkId: "",
+      saleId: "", // 一会要删除
       spuId: "", // 当前要更新的spuInfo的id
 
       // 当前SpuInfo对象
@@ -143,6 +149,18 @@ export default {
       inputVisible: false,
       inputValue: ""
     };
+  },
+
+  computed: {
+    // 得到saleAttrList中还没有使用的属性的数组:
+    // 只留下没有的spuInfo.spuSaleAttrList中的属性
+    unUsedSaleAttrList() {
+      return this.saleAttrList.filter(attr => {
+        return this.spuInfo.spuSaleAttrList.every(
+          spuAttr => spuAttr.saleAttrName !== attr.name
+        );
+      });
+    }
   },
 
   methods: {
