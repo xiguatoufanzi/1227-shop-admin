@@ -46,16 +46,22 @@
             ? `还有${unUsedSaleAttrList.length}个未使用`
             : '没有啦！'
         "
-        v-model="saleId"
+        v-model="attrIdAttrName"
       >
         <el-option
           v-for="attr in unUsedSaleAttrList"
           :key="attr.id"
           :label="attr.name"
-          :value="attr.id"
+          :value="attr.id + ':' + attr.name"
         ></el-option>
       </el-select>
-      <el-button type="primary" icon="el-icon-plus">添加销售属性</el-button>
+      <el-button
+        :disabled="!attrIdAttrName"
+        type="primary"
+        icon="el-icon-plus"
+        @click="addSpuSaleAttr"
+        >添加销售属性</el-button
+      >
 
       <el-table style="margin-top: 20px" border :data="spuInfo.spuSaleAttrList">
         <!-- 序号列 -->
@@ -67,28 +73,29 @@
           <template slot-scope="{ row, $index }">
             <el-tag
               :key="sAttr.id"
-              v-for="sAttr in row.spuSaleAttrValueList"
+              v-for="(sAttr, index) in row.spuSaleAttrValueList"
               closable
               :disable-transitions="false"
-              @close="handleClose(sAttr)"
+              @close="row.spuSaleAttrValueList.splice(index, 1)"
             >
               {{ sAttr.saleAttrValueName }}
             </el-tag>
             <el-input
+              placeholder="请输入名称"
               class="input-new-tag"
               v-if="row.edit"
               v-model="row.saleAttrValueName"
               ref="saveTagInput"
               size="small"
-              @keyup.enter.native="handleInputConfirm"
-              @blur="handleInputConfirm"
+              @keyup.enter.native="handleInputConfirm(row)"
+              @blur="handleInputConfirm(row)"
             >
             </el-input>
             <el-button
               v-else
               class="button-new-tag"
               size="small"
-              @click="showInput"
+              @click="showInput(row)"
               >+ 添加</el-button
             >
           </template>
@@ -96,7 +103,10 @@
 
         <el-table-column label="操作">
           <template slot-scope="{ row, $index }">
-            <el-popconfirm :title="`确定删除属性 吗?`">
+            <el-popconfirm
+              :title="`确定删除吗?`"
+              @onConfirm="spuInfo.spuSaleAttrList.splice($index, 1)"
+            >
               <hint-button
                 type="danger"
                 title="删除"
@@ -111,7 +121,7 @@
     </el-form-item>
 
     <el-form-item>
-      <el-button type="primary">保存</el-button>
+      <el-button type="primary" @click="save">保存</el-button>
       <el-button @click="back">返回</el-button>
     </el-form-item>
   </el-form>
@@ -131,7 +141,6 @@ export default {
       dialogImageUrl: "", // 要显示的大图的url
       dialogVisible: false, // 是否显示大图dialog, 默认不显示
 
-      saleId: "", // 一会要删除
       spuId: "", // 当前要更新的spuInfo的id
 
       // 当前SpuInfo对象
@@ -147,8 +156,7 @@ export default {
       trademarkList: [], //品牌列表
       saleAttrList: [], //销售属性列表
 
-      inputVisible: false,
-      inputValue: ""
+      attrIdAttrName: "" // 用来收集销售属性的id与name,   id:name
     };
   },
 
@@ -165,6 +173,52 @@ export default {
   },
 
   methods: {
+    //保存(添加/更新)SPU详情信息
+    async save() {
+      // 取出请求需要的数据, 并做必要的整理工作
+      const { spuInfo, spuImageList } = this;
+
+      // 整理1: 处理spuImageList属性
+      spuInfo.spuImageList = spuImageList.map(item => ({
+        imgName: item.name,
+        imgUrl: item.response ? item.response.data : item.url
+      }));
+
+      /*
+        整理2: 处理spuSaleAttrList属性
+        1. 删除不必要的参数数据: 数组元素对象(属性对象)很可能有2个不必要的数据
+        2. 过滤掉没有一个属性值对象的属性
+      */
+      spuInfo.spuSaleAttrList = spuInfo.spuSaleAttrList.filter(attr => {
+        delete attr.edit;
+        delete attr.saleAttrValueName;
+        return attr.spuSaleAttrValueList.length > 0;
+      });
+
+      // 发送保存SPU详情信息的异步ajax请求
+      const result = await this.$API.spu.addUpdate(spuInfo);
+      // 成功了, ...
+      if (result.code === 200) {
+        this.$message.success("保存SPU成功");
+      } else {
+        // 失败了, 提示
+        this.$message.error("保存SPU失败");
+      }
+    },
+
+    //添加一个新的spu销售属性数据对象
+    addSpuSaleAttr() {
+      // 取出收集的销售属性的id与name
+      const [baseSaleAttrId, saleAttrName] = this.attrIdAttrName.split(":");
+      this.spuInfo.spuSaleAttrList.push({
+        baseSaleAttrId,
+        saleAttrName,
+        spuSaleAttrValueList: []
+      });
+      // 删除收集的属性id与name
+      this.attrIdAttrName = "";
+    },
+
     /*
     上传图片成功后的回调函数
     response: 响应体数据对象, 对应的是axios中的response.data
@@ -188,25 +242,44 @@ export default {
       this.dialogVisible = true;
     },
 
-    //有关销售属性表格的方法
-    handleClose(tag) {
-      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
-    },
-
-    showInput() {
-      this.inputVisible = true;
-      this.$nextTick(_ => {
-        this.$refs.saveTagInput.$refs.input.focus();
-      });
-    },
-
-    handleInputConfirm() {
-      let inputValue = this.inputValue;
-      if (inputValue) {
-        this.dynamicTags.push(inputValue);
+    //显示输入框: 在当前行
+    showInput(spuSaleAttr) {
+      if (spuSaleAttr.hasOwnProperty("edit")) {
+        spuSaleAttr.edit = true;
+      } else {
+        this.$set(spuSaleAttr, "edit", true);
       }
-      this.inputVisible = false;
-      this.inputValue = "";
+      this.$nextTick(() => this.$refs.saveTagInput.focus());
+    },
+    //确定添加一个新的SPU销售属性值对象:
+    handleInputConfirm(spuSaleAttr) {
+      // 取出需要的数据
+      const { saleAttrValueName, baseSaleAttrId } = spuSaleAttr;
+
+      //限制1: 属性值名称必须有输入
+      if (!saleAttrValueName) {
+        spuSaleAttr.edit = false;
+        return;
+      }
+
+      //限制2: 输入的属性值名称不能与已有重复
+      const isRepeat = spuSaleAttr.spuSaleAttrValueList.some(
+        value => value.saleAttrValueName === saleAttrValueName
+      );
+      if (isRepeat) {
+        this.$message.warning("不能重复!!");
+        return;
+      }
+
+      //添加一个新的SPU销售属性值对象
+      spuSaleAttr.spuSaleAttrValueList.push({
+        saleAttrValueName,
+        baseSaleAttrId
+      });
+
+      //显示查看模式
+      spuSaleAttr.edit = false;
+      spuSaleAttr.saleAttrValueName = "";
     },
 
     //由父组件调用的方法,请求加载相关数据
