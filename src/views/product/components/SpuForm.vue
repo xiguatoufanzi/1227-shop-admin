@@ -200,6 +200,9 @@ export default {
       // 成功了, ...
       if (result.code === 200) {
         this.$message.success("保存SPU成功");
+        // 分发自定义事件, 让修改页面关闭
+        this.$emit("update:visible", false);
+        this.$emit("saveEnd");
       } else {
         // 失败了, 提示
         this.$message.error("保存SPU失败");
@@ -283,7 +286,8 @@ export default {
     },
 
     //由父组件调用的方法,请求加载相关数据
-    initLoadAddData() {
+    initLoadAddData(category3Id) {
+      this.spuInfo.category3Id = category3Id;
       this.getTrademarkList();
       this.getSaleAttrList();
     },

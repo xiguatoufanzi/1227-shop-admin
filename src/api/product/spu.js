@@ -45,7 +45,6 @@ export default {
       spuInfo
     );
   },
-
   /*
   获取指定分类的SPU分页列表
   GET /admin/product/{page}/{limit}

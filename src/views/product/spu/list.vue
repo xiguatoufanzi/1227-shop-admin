@@ -45,10 +45,11 @@
                 type="info"
                 icon="el-icon-info"
                 size="mini"
+                @click="showSkuList(row)"
               ></HintButton>
-              <el-popconfirm :title="`确定删除属性 吗?`">
+              <el-popconfirm :title="`确定删除吗?`" @onConfirm="delSpu(row)">
                 <HintButton
-                  title="删除"
+                  title="删除SPU"
                   type="danger"
                   icon="el-icon-delete"
                   size="mini"
@@ -73,9 +74,26 @@
         </el-pagination>
       </div>
 
-      <SpuForm ref="spuForm" :visible.sync="isShowSpuForm"></SpuForm>
+      <SpuForm
+        ref="spuForm"
+        :visible.sync="isShowSpuForm"
+        @saveEnd="getSpuList()"
+      ></SpuForm>
       <SkuForm v-show="isShowSkuForm"></SkuForm>
     </el-card>
+
+    <el-dialog :title="spuName + '->SKU列表'" :visible.sync="isShowSkuList">
+      <el-table :data="skuList">
+        <el-table-column label="名称" prop="skuName"></el-table-column>
+        <el-table-column label="价格" prop="price"></el-table-column>
+        <el-table-column label="重量" prop="weight"></el-table-column>
+        <el-table-column label="默认图片">
+          <template slot-scope="{ row }">
+            <img :src="row.skuDefaultImg" style="height:100px;width:100px" />
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -98,8 +116,12 @@ export default {
 
       loading: false,
 
+      spuName: "", //点击的spu名字
+      skuList: [], //需要显示的sku列表
+
       isShowSpuForm: false, // 是否显示spuForm界面
-      isShowSkuForm: false // 是否显示skuForm界面
+      isShowSkuForm: false, // 是否显示skuForm界面
+      isShowSkuList: false // 是否显示skuList界面
     };
   },
 
@@ -109,6 +131,25 @@ export default {
   },
 
   methods: {
+    //删除spu
+    async delSpu(value) {
+      const result = await this.$API.spu.remove(value.id);
+      if (result.code === 200) {
+        this.$message.success("删除成功");
+        this.getSpuList();
+      } else {
+        this.$message.error("删除失败");
+      }
+    },
+
+    //查看指定的SKU列表
+    async showSkuList(value) {
+      this.spuName = value.spuName;
+      this.isShowSkuList = true;
+      const result = await this.$API.sku.getListBySpuId(value.id);
+      this.skuList = result.data;
+    },
+
     //显示SKU添加的表单界面
     showSkuAdd() {
       this.isShowSkuForm = true;
@@ -116,8 +157,9 @@ export default {
 
     //显示SPU的添加界面
     showAddSpu() {
+      const { category3Id } = this;
       this.isShowSpuForm = true;
-      this.$refs.spuForm.initLoadAddData();
+      this.$refs.spuForm.initLoadAddData(category3Id);
     },
 
     //显示SPU的修改界面
