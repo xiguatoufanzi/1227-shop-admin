@@ -120,7 +120,7 @@ export default {
       skuList: [], //需要显示的sku列表
 
       isShowSpuForm: false, // 是否显示spuForm界面
-      isShowSkuForm: true, // 是否显示skuForm界面
+      isShowSkuForm: false, // 是否显示skuForm界面
       isShowSkuList: false // 是否显示skuList界面
     };
   },

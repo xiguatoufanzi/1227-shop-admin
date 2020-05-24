@@ -200,7 +200,7 @@ export default {
       // 成功了, ...
       if (result.code === 200) {
         this.$message.success("保存SPU成功");
-        // 分发自定义事件, 让修改页面关闭
+        // 分发自定义事件, 让页面关闭
         this.$emit("update:visible", false);
         this.$emit("saveEnd");
       } else {

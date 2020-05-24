@@ -1,5 +1,5 @@
 <template>
-  <el-form :label-position="labelPosition" label-width="80px">
+  <el-form :label-position="labelPosition" label-width="80px" v-show="visible">
     <el-form-item label="SPU 名称">
       <span>atguigu</span>
     </el-form-item>
@@ -79,7 +79,7 @@
     <el-form-item>
       <template slot-scope="{ row }">
         <el-button type="primary">保存</el-button>
-        <el-button>返回</el-button>
+        <el-button @click="back">返回</el-button>
       </template>
     </el-form-item>
   </el-form>
@@ -87,7 +87,7 @@
 
 <script>
 export default {
-  name: "SkuList",
+  name: "SkuForm",
   props: {
     visible: Boolean
   },
@@ -96,6 +96,13 @@ export default {
     return {
       labelPosition: "right"
     };
+  },
+
+  methods: {
+    back() {
+      // 分发自定义事件, 让修改页面关闭
+      this.$emit("update:visible", false);
+    }
   }
 };
 </script>
