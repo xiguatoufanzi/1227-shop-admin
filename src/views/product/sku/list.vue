@@ -15,10 +15,20 @@
       <el-table-column label="操作" width="250">
         <template slot-scope="{ row }">
           <HintButton
+            v-if="row.isSale == 0"
+            title="上架"
+            type="info"
+            size="mini"
+            icon="el-icon-top"
+            @click="onSale(row.id)"
+          ></HintButton>
+          <HintButton
+            v-else
             title="下架"
-            type="warning"
+            type="success"
             size="mini"
             icon="el-icon-bottom"
+            @click="cancelSale(row.id)"
           ></HintButton>
           <HintButton
             title="修改"
@@ -33,7 +43,7 @@
             icon="el-icon-info"
             @click="showSkuInfo(row.id)"
           ></HintButton>
-          <el-popconfirm title="确定删除吗?">
+          <el-popconfirm title="确定删除吗?" @onConfirm="delSku(row.id)">
             <HintButton
               title="删除"
               type="danger"
@@ -145,6 +155,34 @@ export default {
   },
 
   methods: {
+    //删除sku
+    async delSku(id){
+      const result = await this.$API.sku.remove(id);
+      if (result.code === 200) {
+        this.$message.success("删除成功");
+        this.getSkuList();
+      }else{
+        this.$message.error("删除失败");
+      }
+    },
+
+    //下架
+    async cancelSale(id) {
+      const result = await this.$API.sku.cancelSale(id);
+      if (result.code === 200) {
+        this.$message.success("下架成功");
+        this.getSkuList(this.page);
+      }
+    },
+    //上架
+    async onSale(id) {
+      const result = await this.$API.sku.onSale(id);
+      if (result.code === 200) {
+        this.$message.success("上架成功");
+        this.getSkuList(this.page);
+      }
+    },
+
     //显示SKU详情
     async showSkuInfo(id) {
       this.isShowSkuInfo = true;
