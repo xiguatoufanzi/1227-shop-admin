@@ -1,5 +1,5 @@
 <template>
-  <el-card>
+  <el-card class="sku-list">
     <el-table border :data="skuList" v-loading="loading">
       <el-table-column type="index" label="序号" width="80" align="center">
       </el-table-column>
@@ -31,6 +31,7 @@
             type="primary"
             size="mini"
             icon="el-icon-info"
+            @click="showSkuInfo(row.id)"
           ></HintButton>
           <el-popconfirm title="确定删除吗?">
             <HintButton
@@ -57,6 +58,66 @@
       @size-change="handleSizeChange"
     >
     </el-pagination>
+
+    <el-drawer
+      :visible.sync="isShowSkuInfo"
+      direction="rtl"
+      size="50%"
+      :with-header="false"
+    >
+      <el-row>
+        <el-col :span="5">名称</el-col>
+        <el-col :span="16">{{ skuInfo.skuName }}</el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="5">描述</el-col>
+        <el-col :span="16">{{ skuInfo.skuDesc }}</el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="5">价格</el-col>
+        <el-col :span="16">{{ skuInfo.price }}</el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="5">平台属性</el-col>
+        <el-col :span="18">
+          <el-tag
+            type="success"
+            style="margin-right: 5px"
+            v-for="value in skuInfo.skuAttrValueList"
+            :key="value.id"
+          >
+            {{ value.attrId + "-" + value.valueId }}
+          </el-tag>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="5">销售属性</el-col>
+        <el-col :span="18">
+          <el-tag
+            type="success"
+            style="margin-right: 5px"
+            v-for="value in skuInfo.skuSaleAttrValueList"
+            :key="value.id"
+          >
+            {{ value.id + "-" + value.saleAttrValueId }}
+          </el-tag>
+        </el-col>
+      </el-row>
+
+      <el-row>
+        <el-col :span="5">商品图片</el-col>
+        <el-col :span="16">
+          <el-carousel trigger="click" height="400px" class="img-carousel">
+            <el-carousel-item
+              v-for="item in skuInfo.skuImageList"
+              :key="item.id"
+            >
+              <img :src="item.imgUrl" alt="" />
+            </el-carousel-item>
+          </el-carousel>
+        </el-col>
+      </el-row>
+    </el-drawer>
   </el-card>
 </template>
 
@@ -71,7 +132,11 @@ export default {
 
       total: 0, // 总数量
       page: 1, // 当前页码
-      limit: 10 // 每页数量
+      limit: 10, // 每页数量
+
+      skuInfo: {},
+
+      isShowSkuInfo: false
     };
   },
 
@@ -80,6 +145,15 @@ export default {
   },
 
   methods: {
+    //显示SKU详情
+    async showSkuInfo(id) {
+      this.isShowSkuInfo = true;
+      const result = await this.$API.sku.get(id);
+      if (result.code === 200) {
+        this.skuInfo = result.data;
+      }
+    },
+
     //异步获取指定页码的sku列表
     async getSkuList(page = 1) {
       this.page = page;
@@ -101,4 +175,40 @@ export default {
 };
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.sku-list {
+  .el-row {
+    height: 40px;
+    margin-left: 10px;
+    .el-col {
+      line-height: 40px;
+      &.el-col-5 {
+        text-align: right;
+        font-weight: bold;
+        font-size: 18px;
+        margin-right: 15px;
+      }
+    }
+  }
+  .img-carousel {
+    width: 400px;
+    border: 1px solid #ccc;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+
+    /deep/ .el-carousel__indicator {
+      button {
+        background-color: hotpink;
+      }
+
+      &.is-active {
+        button {
+          background-color: green;
+        }
+      }
+    }
+  }
+}
+</style>

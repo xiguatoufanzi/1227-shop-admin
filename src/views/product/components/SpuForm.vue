@@ -200,6 +200,9 @@ export default {
       // 成功了, ...
       if (result.code === 200) {
         this.$message.success("保存SPU成功");
+        // 重置当前组件的数据
+        this.resetData();
+
         // 分发自定义事件, 让页面关闭
         this.$emit("update:visible", false);
         this.$emit("saveEnd");
@@ -207,6 +210,26 @@ export default {
         // 失败了, 提示
         this.$message.error("保存SPU失败");
       }
+    },
+
+    //重置当前组件的数据
+    resetData() {
+      this.dialogImageUrl = "";
+      this.dialogVisible = false;
+
+      this.spuId = null;
+      this.spuInfo = {
+        category3Id: "",
+        spuName: "",
+        description: "",
+        tmId: "",
+        spuImageList: [],
+        spuSaleAttrList: []
+      };
+      this.spuImageList = [];
+      this.trademarkList = [];
+      this.saleAttrList = [];
+      this.attrIdAttrName = "";
     },
 
     //添加一个新的spu销售属性数据对象
@@ -331,8 +354,12 @@ export default {
     },
 
     back() {
+      // 重置当前组件的数据
+      this.resetData();
       // 分发自定义事件, 让修改页面关闭
       this.$emit("update:visible", false);
+      // 分发自定义事件, 通知父组件当前组件取消了操作
+      this.$emit("cancel");
     }
   }
 };

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-card style="margin-bottom: 20px">
-      <CategorySelector @categoryChange="handleCategoryChange" />
+    <el-card style="margin-bottom: 20px" v-show="!isShowSkuForm">
+      <CategorySelector ref="cs" @categoryChange="handleCategoryChange" />
     </el-card>
 
     <el-card style="margin-bottom: 20px">
@@ -10,7 +10,8 @@
           type="primary"
           icon="el-icon-plus"
           style="margin-bottom:20px"
-          @click="showAddSpu"
+          @click="showAddSpu()"
+          :disabled="!category3Id"
           >添加SPU</el-button
         >
 
@@ -31,7 +32,7 @@
                 type="primary"
                 icon="el-icon-plus"
                 size="mini"
-                @click="showSkuAdd"
+                @click="showSkuAdd(row)"
               ></HintButton>
               <HintButton
                 title="修改SPU"
@@ -70,6 +71,7 @@
           :total="total"
           @current-change="getSpuList"
           @size-change="handleSizeChange"
+          @cancel="handleCancel"
         >
         </el-pagination>
       </div>
@@ -77,9 +79,13 @@
       <SpuForm
         ref="spuForm"
         :visible.sync="isShowSpuForm"
-        @saveEnd="getSpuList()"
+        @saveEnd="handleSaveSuccess"
       ></SpuForm>
-      <SkuForm :visible.sync="isShowSkuForm"></SkuForm>
+      <SkuForm
+        ref="skuForm"
+        :visible.sync="isShowSkuForm"
+        :saveSuccess="() => (isShowSkuForm = false)"
+      ></SkuForm>
     </el-card>
 
     <el-dialog :title="spuName + '->SKU列表'" :visible.sync="isShowSkuList">
@@ -126,11 +132,31 @@ export default {
   },
 
   mounted() {
-    this.category3Id = 61;
-    this.getSpuList();
+    // this.category1Id = 2;
+    // this.category2Id = 13;
+    // this.category3Id = 61;
+    // this.getSpuList();
+  },
+
+  watch: {
+    isShowSpuForm(value) {
+      this.$refs.cs.disabled = value;
+    }
   },
 
   methods: {
+    // Spu保存成功的事件监听回调
+    handleSaveSuccess() {
+      this.getSpuList(this.spuId ? this.page : 1);
+      //重置更新的标识
+      this.spuId = null;
+    },
+    //SPU保存操作取消的事件监听回调
+    handleCancel() {
+      //重置更新的标识
+      this.spuId = null;
+    },
+
     //删除spu
     async delSpu(value) {
       const result = await this.$API.spu.remove(value.id);
@@ -143,16 +169,23 @@ export default {
     },
 
     //查看指定的SKU列表
-    async showSkuList(value) {
-      this.spuName = value.spuName;
+    async showSkuList(spu) {
+      this.spuName = spu.spuName;
+      this.spu = spu;
       this.isShowSkuList = true;
-      const result = await this.$API.sku.getListBySpuId(value.id);
+      const result = await this.$API.sku.getListBySpuId(spu.id);
       this.skuList = result.data;
     },
 
     //显示SKU添加的表单界面
-    showSkuAdd() {
+    showSkuAdd(spu) {
       this.isShowSkuForm = true;
+
+      spu = { ...spu };
+      spu.category1Id = this.category1Id;
+      spu.category2Id = this.category2Id;
+      // 让skuForm去请求加载初始显示需要的数据
+      this.$refs.skuForm.initLoadAddData(spu);
     },
 
     //显示SPU的添加界面
@@ -164,6 +197,8 @@ export default {
 
     //显示SPU的修改界面
     showUpdateSpu(id) {
+      // 保存更新的标识
+      this.spuId = id;
       this.isShowSpuForm = true;
       //传入id，让spu获取初始数据
       this.$refs.spuForm.initLoadUpdateData(id);
@@ -191,6 +226,7 @@ export default {
 
     //获取指定页码的列表数据
     async getSpuList(page = 1) {
+      this.page = page;
       const { limit, category3Id } = this;
       const result = await this.$API.spu.getList(page, limit, category3Id);
       if (result.code === 200) {
