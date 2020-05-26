@@ -132,10 +132,10 @@ export default {
   },
 
   mounted() {
-    // this.category1Id = 2;
-    // this.category2Id = 13;
-    // this.category3Id = 61;
-    // this.getSpuList();
+    this.category1Id = 2;
+    this.category2Id = 13;
+    this.category3Id = 61;
+    this.getSpuList();
   },
 
   watch: {
