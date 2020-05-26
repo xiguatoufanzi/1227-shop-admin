@@ -71,7 +71,6 @@
           :total="total"
           @current-change="getSpuList"
           @size-change="handleSizeChange"
-          @cancel="handleCancel"
         >
         </el-pagination>
       </div>
@@ -80,6 +79,7 @@
         ref="spuForm"
         :visible.sync="isShowSpuForm"
         @saveEnd="handleSaveSuccess"
+        @cancel="handleCancel"
       ></SpuForm>
       <SkuForm
         ref="skuForm"
@@ -132,10 +132,10 @@ export default {
   },
 
   mounted() {
-    this.category1Id = 2;
-    this.category2Id = 13;
-    this.category3Id = 61;
-    this.getSpuList();
+    // this.category1Id = 2;
+    // this.category2Id = 13;
+    // this.category3Id = 61;
+    // this.getSpuList();
   },
 
   watch: {
